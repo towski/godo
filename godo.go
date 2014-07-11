@@ -36,7 +36,7 @@ func main() {
     gocurses.CursSet(0)
     gocurses.Stdscr.Keypad(true)
     var scene utils.Scene
-    scene.InitScene(80, 40)
+    scene.InitScene(40, 40)
     scene.AddWalls(20)
     utils.InitAstar(&scene)
     var mutex = &sync.Mutex{}
@@ -50,6 +50,7 @@ func main() {
             icon.x = 20//rand.Intn(50)
             icon.y = 30//rand.Intn(50)
             messages <- icon
+                        time.Sleep(2000 * time.Millisecond)
             for {
                 if started == 0 {
                     started = 1
@@ -70,17 +71,11 @@ func main() {
                             break
                         } else {
                             finalPoint = finalPoint.Parent
-            log += fmt.Sprintf("Parent \n")
-                    if finalPoint.Child != nil {
-            log += fmt.Sprintf("Has child \n")
-            }
                         }
                     }
                     gocurses.End()
                     if finalPoint.Child == nil {
-            log += fmt.Sprintf("No Child \n")
                     } else {
-            log += fmt.Sprintf("Child \n")
                         icon.x = finalPoint.Child.Y
                         icon.y = finalPoint.Child.X
                         finalPoint = finalPoint.Child
@@ -106,16 +101,20 @@ func main() {
 
     go func() { 
             var draw_icon Icon
+            var res int
         for {
             draw_icon = <-messages
             mutex.Lock()
             if draw_icon.old_y != 0 && draw_icon.old_x != 0 {
-                gocurses.Mvaddstr(draw_icon.old_y, draw_icon.old_x, " ")
+                gocurses.Move(draw_icon.old_y, draw_icon.old_x)
+                gocurses.Addch(' ')
+                log += fmt.Sprintf("removing d %d, %d\n", draw_icon.old_x, draw_icon.old_y)
             }
-            gocurses.Mvaddstr(draw_icon.y, draw_icon.x, "d")
-            //log += fmt.Sprintf("Drawing d %d, %d\n", draw_icon.x, draw_icon.y)
-            mutex.Unlock()
+            gocurses.Move(draw_icon.y, draw_icon.x)
+            gocurses.Addch('d')
+            log += fmt.Sprintf("Drawing d %d, %d %d\n", draw_icon.x, draw_icon.y, res)
             gocurses.Refresh()
+            mutex.Unlock()
             frames += 1
         }
     }()
@@ -126,9 +125,7 @@ func main() {
         for i := 0; i < scene.Rows; i++ {
             for j := 0; j < scene.Cols; j++ {
                 if scene.Data[i][j] == '#' {
-            mutex.Lock()
              //       log += fmt.Sprintf("Drawing wall %d, %d\n", i, j)
-            mutex.Unlock()
                     wall_icon.x = j
                     wall_icon.y = i
                     messages <- wall_icon
