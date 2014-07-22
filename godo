@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rm error.log
+go run godo.go 2> error.log
+reset
+cat error.log
